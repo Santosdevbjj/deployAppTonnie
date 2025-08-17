@@ -155,4 +155,5 @@ Com este projeto você tem um **exemplo completo** de:
 - Persistência de dados com PVC.  
 - Injeção segura de variáveis com ConfigMaps e Secrets.  
 - Automação de build e deploy com GitHub Actions.
-- 
+
+
