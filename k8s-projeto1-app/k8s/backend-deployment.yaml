@@ -45,4 +45,57 @@ spec:
 
   containers:
 - name: backend
-  image: DOCKER_USER/backend-k8s:latest
+  image: DOCKER_USER/backend-k8s:latest 
+
+
+
+  apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: sergiosantos/backend-k8s:latest   # <- imagem do Docker Hub
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_HOST
+          value: "mysql-svc.default.svc.cluster.local"
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: mysql-config
+              key: MYSQL_DATABASE
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: mysql-config
+              key: MYSQL_APP_USER
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_APP_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-svc
+spec:
+  selector:
+    app: backend
+  ports:
+  - port: 8080
+    targetPort: 80
+  type: ClusterIP 
+  
