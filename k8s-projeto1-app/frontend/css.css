@@ -1,0 +1,4 @@
+body { font-family: system-ui, Arial; margin: 2rem; }
+label { display:block; margin: .5rem 0; }
+button { padding:.5rem 1rem; cursor:pointer; }
+#saida { background:#f5f5f5; padding:1rem; margin-top:1rem; }
