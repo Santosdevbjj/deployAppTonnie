@@ -4,57 +4,6 @@ metadata:
   name: backend
 spec:
   replicas: 2
-  selector: { matchLabels: { app: backend } }
-  template:
-    metadata:
-      labels: { app: backend }
-    spec:
-      containers:
-        - name: backend
-          image: sergio/backend:1.0   # você construirá esta imagem
-          ports:
-            - containerPort: 80
-          env:
-            - name: DB_HOST
-              value: "mysql-svc.default.svc.cluster.local"
-            - name: DB_NAME
-              valueFrom: { configMapKeyRef: { name: mysql-config, key: MYSQL_DATABASE } }
-            - name: DB_USER
-              valueFrom: { configMapKeyRef: { name: mysql-config, key: MYSQL_APP_USER } }
-            - name: DB_PASS
-              valueFrom: { secretKeyRef: { name: mysql-secret, key: MYSQL_APP_PASSWORD } }
-          readinessProbe:
-            httpGet: { path: /, port: 80 }
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet: { path: /, port: 80 }
-            initialDelaySeconds: 15
-            periodSeconds: 20
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: backend-svc
-spec:
-  selector: { app: backend }
-  ports:
-    - port: 8080
-      targetPort: 80
-  type: ClusterIP 
-
-  containers:
-- name: backend
-  image: DOCKER_USER/backend-k8s:latest 
-
-
-
-  apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: backend
-spec:
-  replicas: 2
   selector:
     matchLabels:
       app: backend
@@ -65,7 +14,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: sergiosantos/backend-k8s:latest   # <- imagem do Docker Hub
+        image: sergio/backend-k8s:latest   # imagem publicada no Docker Hub
         ports:
         - containerPort: 80
         env:
@@ -86,6 +35,18 @@ spec:
             secretKeyRef:
               name: mysql-secret
               key: MYSQL_APP_PASSWORD
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 20
 ---
 apiVersion: v1
 kind: Service
@@ -97,5 +58,4 @@ spec:
   ports:
   - port: 8080
     targetPort: 80
-  type: ClusterIP 
-  
+  type: ClusterIP
