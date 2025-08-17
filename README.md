@@ -139,7 +139,7 @@ Secrets necessários no repositório:
 ## 🚀 Fluxo de uso
 
 1. Build automático de imagens → via GitHub Actions.  
-2. Publicação no Docker Hub → `sergiosantos/frontend-k8s:latest` e `sergiosantos/backend-k8s:latest`.  
+2. Publicação no Docker Hub → `sergio/frontend-k8s:latest` e `sergio/backend-k8s:latest`.  
 3. Deploy no Kubernetes → manual (`kubectl apply -f k8s/`) ou automático via pipeline.  
 4. Acesso →  
    - `minikube service frontend-svc --url` (NodePort)  
