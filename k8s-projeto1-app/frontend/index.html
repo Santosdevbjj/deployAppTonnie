@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>Projeto K8s – Formulário</title>
+  <link rel="stylesheet" href="css.css" />
+</head>
+<body>
+  <h1>Envie sua mensagem</h1>
+  <form id="formMensagem">
+    <label>Nome: <input name="nome" required /></label><br/>
+    <label>E-mail: <input type="email" name="email" required /></label><br/>
+    <label>Comentário:<br/><textarea name="comentario" rows="5" required></textarea></label><br/>
+    <button type="submit">Enviar</button>
+  </form>
+  <pre id="saida"></pre>
+  <script src="js.js"></script>
+</body>
+</html>
