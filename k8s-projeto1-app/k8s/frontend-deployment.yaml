@@ -33,3 +33,11 @@ spec:
     - port: 80
       targetPort: 8080
   type: NodePort   # facilita o acesso no Minikube; ou use Ingress abaixo
+
+
+containers:
+- name: frontend
+  image: DOCKER_USER/frontend-k8s:latest
+
+
+
