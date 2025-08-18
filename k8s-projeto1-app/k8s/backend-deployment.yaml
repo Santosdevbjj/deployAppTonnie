@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
       - name: backend
-        image: sergio/backend-k8s:latest   # imagem publicada no Docker Hub
+        image: sergiosantos/backend-k8s:latest   # imagem do Docker Hub
+        imagePullPolicy: Always                 # força baixar a imagem nova sempre
         ports:
         - containerPort: 80
         env:
