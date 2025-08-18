@@ -4,68 +4,62 @@ metadata:
   name: mysql
 spec:
   replicas: 1
-  selector: { matchLabels: { app: mysql } }
+  selector:
+    matchLabels:
+      app: mysql
   template:
     metadata:
-      labels: { app: mysql }
+      labels:
+        app: mysql
     spec:
       containers:
-        - name: mysql
-          image: mysql:8.0
-          ports:
-            - containerPort: 3306
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              valueFrom: { secretKeyRef: { name: mysql-secret, key: MYSQL_ROOT_PASSWORD } }
-            - name: MYSQL_DATABASE
-              valueFrom: { configMapKeyRef: { name: mysql-config, key: MYSQL_DATABASE } }
-            - name: MYSQL_USER
-              valueFrom: { configMapKeyRef: { name: mysql-config, key: MYSQL_APP_USER } }
-            - name: MYSQL_PASSWORD
-              valueFrom: { secretKeyRef: { name: mysql-secret, key: MYSQL_APP_PASSWORD } }
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/mysql
-            - name: initdb
-              mountPath: /docker-entrypoint-initdb.d
+      - name: mysql
+        image: mysql:8.0
+        imagePullPolicy: Always              # força baixar a versão mais nova do MySQL 8.0
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: mysql-config
+              key: MYSQL_DATABASE
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: mysql-config
+              key: MYSQL_APP_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_APP_PASSWORD
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+        - name: mysql-initdb
+          mountPath: /docker-entrypoint-initdb.d
       volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: mysql-pvc
-        - name: initdb
-          configMap:
-            # Para injetar seu 01_init.sql, você pode usar um ConfigMap OR montar via image custom.
-            # Aqui opto por ConfigMap separado; veja abaixo "k8s tip".
-            name: mysql-init-sql
----
-# ConfigMap com seu SQL de inicialização (gera /docker-entrypoint-initdb.d/01_init.sql)
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mysql-init-sql
-data:
-  01_init.sql: |
-    -- (cole aqui MESMO conteúdo do dataBase/01_init.sql)
-    CREATE DATABASE IF NOT EXISTS meubanco CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-    USE meubanco;
-    CREATE TABLE IF NOT EXISTS mensagem (
-      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-      nome VARCHAR(255) NOT NULL,
-      email VARCHAR(255) NOT NULL,
-      comentario VARCHAR(1000) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE USER IF NOT EXISTS 'appuser'@'%' IDENTIFIED BY 'mudarDepois';
-    GRANT SELECT, INSERT, UPDATE, DELETE ON meubanco.* TO 'appuser'@'%';
-    FLUSH PRIVILEGES;
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+      - name: mysql-initdb
+        configMap:
+          name: mysql-initdb-config
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql-svc
 spec:
-  selector: { app: mysql }
+  selector:
+    app: mysql
   ports:
-    - port: 3306
-      targetPort: 3306
-  type: ClusterIP
+  - port: 3306
+    targetPort: 3306
+  clusterIP: None   # headless service para stateful apps como MySQL
