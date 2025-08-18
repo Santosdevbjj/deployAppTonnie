@@ -36,7 +36,39 @@ O Kubernetes gerencia cada camada com **Deployments, Services, ConfigMaps, Secre
 
 ## 📂 Estrutura de Pastas
 
-k8s-projeto1-app/ ├── frontend/                  # Código e Dockerfile do Frontend ├── backend/                   # Código e Dockerfile do Backend ├── api/                       # API PHP de mensagens ├── dataBase/                  # Scripts SQL de inicialização ├── k8s/                       # Manifests Kubernetes └── .github/workflows/         # Pipeline CI/CD
+k8s-projeto1-app/
+├── frontend/                  # Código e imagem do Frontend
+│   ├── index.html
+│   ├── css.css
+│   ├── js.js
+│   ├── nginx.conf
+│   └── Dockerfile
+│
+├── backend/                   # Código e imagem do Backend
+│   ├── public/
+│   │   └── index.php
+│   └── Dockerfile
+│
+├── api/                       # API PHP
+│   └── mensagem.php
+│
+├── dataBase/                  # Scripts SQL de inicialização
+│   └── 01_init.sql
+│
+├── k8s/                       # Manifests Kubernetes
+│   ├── namespace.yaml
+│   ├── mysql-secret.yaml
+│   ├── mysql-configmap.yaml
+│   ├── mysql-pvc.yaml
+│   ├── mysql-deployment.yaml
+│   ├── backend-deployment.yaml
+│   ├── frontend-deployment.yaml
+│   └── ingress.yaml
+│
+└── .github/
+    └── workflows/             # CI/CD pipeline
+        └── ci-cd.yml
+
 
 ---
 
