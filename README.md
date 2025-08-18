@@ -1,8 +1,9 @@
 ## Criando um Deploy de uma Aplicação.
 ---
-![TonnieJava0002](https://github.com/user-attachments/assets/e67eb8a5-c9a3-44b8-bd6e-fe4bd4c81adc)
-
 **Bootcamp TONNIE - Java and AI in Europe.**
+
+![TonnieJava0002](https://github.com/user-attachments/assets/3ae12dba-8fc5-44dc-8acb-ca033b27d4ca)
+
 ---
 
 **DESCRIÇÃO:**
@@ -11,149 +12,269 @@ Neste projeto será realizado um deploy de uma aplicação completa com frontend
 ---
 
 
-# 🚀 Deploy Kubernetes (Minikube) — Frontend + Backend (PHP) + MySQL
+# 🚀 Projeto Kubernetes - Deploy de Aplicação Completa
 
-Este projeto demonstra como implantar uma aplicação **full stack** em **Kubernetes (Minikube)**, com **Frontend (Nginx)**, **Backend (PHP + Apache)** e **Banco de Dados MySQL**, utilizando **Docker**, **Kubernetes Manifests** e **CI/CD com GitHub Actions**.
+![CI/CD](https://github.com/Santosdevbjj/deployAppTonnie/actions/workflows/ci-cd.yml/badge.svg)
 
----
+Este projeto implementa uma aplicação **Fullstack** (Frontend + Backend + Banco MySQL) usando **Docker e Kubernetes (Minikube)**, com pipeline de **CI/CD no GitHub Actions**.
 
-## 📂 Estrutura do Projeto
-
-Abaixo está a lista completa de diretórios e arquivos, com suas respectivas descrições:
-
-### 📌 Frontend (`k8s-projeto1-app/frontend/`)
-
-- **index.html**  
-  Página principal da aplicação. Contém o formulário para o usuário enviar `nome`, `email` e `comentário`.
-
-- **css.css**  
-  Estilos básicos aplicados ao formulário e layout da página (responsividade simples, padding, fontes).
-
-- **js.js**  
-  Script em JavaScript que captura o evento do formulário, envia os dados via `fetch` para o endpoint `/api/mensagem` e exibe a resposta no navegador.
-
-- **nginx.conf**  
-  Configuração personalizada do Nginx:  
-  - Servir os arquivos estáticos (`index.html`, CSS e JS).  
-  - Criar um proxy reverso para `/api/*` direcionando para o backend (`backend-svc` dentro do cluster).  
-  Isso evita problemas de CORS e expõe apenas o frontend para o usuário externo.
-
-- **Dockerfile**  
-  Define a imagem Docker do frontend:  
-  - Baseada no `nginx:alpine`.  
-  - Copia os arquivos estáticos e a configuração customizada.  
-  - Expõe a porta 8080.  
+A proposta é entregar uma aplicação pronta para produção, versionada e automatizada, com boas práticas de DevOps e documentação didática.
 
 ---
 
-### 📌 Backend (`k8s-projeto1-app/backend/`)
+## 📌 Arquitetura do Projeto
 
-- **public/index.php**  
-  Endpoint de healthcheck simples. Responde `"OK - backend online"`, usado nas probes do Kubernetes.
+A arquitetura é composta por três camadas principais:
 
-- **api/mensagem.php**  
-  API responsável por receber o `POST` do formulário do frontend.  
-  - Valida os campos.  
-  - Conecta ao MySQL (usando variáveis de ambiente injetadas pelo Kubernetes).  
-  - Insere os dados na tabela `mensagem`.  
-  - Retorna mensagem de sucesso ou erro.  
+1. **Frontend** → Interface do usuário em HTML, CSS e JS servida via Nginx.  
+2. **Backend** → Aplicação PHP que processa requisições e se conecta ao banco.  
+3. **Banco de Dados (MySQL)** → Armazena os comentários enviados pelo frontend.  
 
-- **Dockerfile**  
-  Define a imagem Docker do backend:  
-  - Baseada em `php:8.2-apache`.  
-  - Instala `pdo_mysql` para comunicação com MySQL.  
-  - Copia os arquivos PHP para o Apache.  
-  - Expõe a porta 80.  
+O Kubernetes gerencia cada camada com **Deployments, Services, ConfigMaps, Secrets, PVCs e Ingress**.
 
 ---
 
-### 📌 Banco de Dados (`k8s-projeto1-app/dataBase/`)
+## 📂 Estrutura de Pastas
 
-- **01_init.sql**  
-  Script de inicialização do MySQL. Executado automaticamente na primeira vez que o contêiner roda com um volume vazio.  
-  - Cria o banco `meubanco`.  
-  - Cria a tabela `mensagem` com colunas `id`, `nome`, `email`, `comentario`, `created_at`.  
-  - Cria o usuário `appuser` com permissões apenas no banco `meubanco`.
+k8s-projeto1-app/ ├── frontend/                  # Código e Dockerfile do Frontend ├── backend/                   # Código e Dockerfile do Backend ├── api/                       # API PHP de mensagens ├── dataBase/                  # Scripts SQL de inicialização ├── k8s/                       # Manifests Kubernetes └── .github/workflows/         # Pipeline CI/CD
 
 ---
 
-### 📌 Kubernetes Manifests (`k8s-projeto1-app/k8s/`)
+## 🖥️ Frontend
 
-- **namespace.yaml** *(opcional)*  
-  Define um namespace separado para os recursos da aplicação, caso queira isolar do `default`.
+### 📄 `frontend/index.html`
+- Página inicial da aplicação.  
+- Contém formulário para envio de **nome, email e comentário**.  
+- Consome a API do backend para exibir mensagens armazenadas no MySQL.
 
-- **mysql-secret.yaml**  
-  Armazena as senhas do MySQL em formato seguro (`base64`).  
-  - `MYSQL_ROOT_PASSWORD` → senha do root.  
-  - `MYSQL_APP_PASSWORD` → senha do usuário `appuser`.
+### 📄 `frontend/css.css`
+- Folha de estilos da aplicação.  
+- Define layout, cores e responsividade da interface.
 
-- **mysql-configmap.yaml**  
-  Armazena variáveis de configuração não sensíveis:  
-  - Nome do banco (`meubanco`).  
-  - Nome do usuário (`appuser`).
+### 📄 `frontend/js.js`
+- Script em JavaScript que conecta o frontend à API do backend via AJAX/Fetch.  
+- Responsável por enviar dados do formulário e listar os comentários.
 
-- **mysql-pvc.yaml**  
-  Define um `PersistentVolumeClaim` de 2Gi para armazenar os dados do MySQL de forma persistente, mesmo que o Pod seja recriado.
+### 📄 `frontend/nginx.conf`
+- Configuração personalizada do **Nginx**.  
+- Define o **root**, tratamento de erros e roteamento para `index.html`.
 
-- **mysql-deployment.yaml**  
-  Deployment e Service do MySQL:  
-  - Usa a imagem oficial `mysql:8.0`.  
-  - Monta volume persistente.  
-  - Monta ConfigMap com o SQL de inicialização.  
-  - Service do tipo `ClusterIP` para comunicação interna.  
-
-- **backend-deployment.yaml**  
-  Deployment e Service do Backend:  
-  - Cria 2 réplicas do backend.  
-  - Injeta as variáveis de conexão ao MySQL (ConfigMap + Secret).  
-  - Define `readinessProbe` e `livenessProbe`.  
-  - Service do tipo `ClusterIP` expõe a porta 8080 dentro do cluster.
-
-- **frontend-deployment.yaml**  
-  Deployment e Service do Frontend:  
-  - Cria 2 réplicas do frontend.  
-  - Executa o Nginx na porta 8080.  
-  - Service do tipo `NodePort`, permitindo acesso externo via `minikube service frontend-svc --url`.
-
-- **ingress.yaml** *(opcional)*  
-  Define um Ingress para expor o frontend via hostname (`app.local`).  
-  Requer habilitar o addon `ingress` no Minikube ou usar um controlador de ingress em produção.
+### 📄 `frontend/Dockerfile`
+- Constrói a imagem Docker do frontend.  
+- Copia arquivos estáticos (HTML, CSS, JS) para dentro do Nginx.  
+- Expõe a porta `8080`.
 
 ---
 
-### 📌 CI/CD Workflow (`.github/workflows/ci-cd.yml`)
+## ⚙️ Backend
 
-- Pipeline de **GitHub Actions** que automatiza o ciclo de vida:  
-  1. Faz checkout do repositório.  
-  2. Faz login no Docker Hub (usando secrets configurados no GitHub).  
-  3. Builda e publica imagens do `backend` e `frontend` no Docker Hub.  
-  4. (Opcional) Aplica os manifests no cluster Kubernetes, caso você configure o secret `KUBECONFIG`.  
+### 📄 `backend/public/index.php`
+- Arquivo inicial do backend.  
+- Recebe as requisições vindas do frontend.  
+- Interage com o banco MySQL para buscar ou inserir dados.
 
-Secrets necessários no repositório:  
-- `DOCKER_HUB_USER` → usuário do Docker Hub.  
-- `DOCKER_HUB_TOKEN` → token de acesso do Docker Hub.  
-- `KUBECONFIG` → (opcional) conteúdo do kubeconfig do cluster para deploy automático.  
-
----
-
-## 🚀 Fluxo de uso
-
-1. Build automático de imagens → via GitHub Actions.  
-2. Publicação no Docker Hub → `sergio/frontend-k8s:latest` e `sergio/backend-k8s:latest`.  
-3. Deploy no Kubernetes → manual (`kubectl apply -f k8s/`) ou automático via pipeline.  
-4. Acesso →  
-   - `minikube service frontend-svc --url` (NodePort)  
-   - ou `http://app.local` (Ingress habilitado).  
+### 📄 `api/mensagem.php`
+- Implementa a **API de mensagens**.  
+- Funções principais:
+  - `GET` → Lista mensagens do banco.  
+  - `POST` → Insere nova mensagem enviada pelo frontend.  
 
 ---
 
-## 📌 Conclusão
+## 🗄️ Banco de Dados
 
-Com este projeto você tem um **exemplo completo** de:  
-- Construção de imagens Docker.  
-- Deploy de uma aplicação com Frontend + Backend + Banco no Kubernetes.  
-- Persistência de dados com PVC.  
-- Injeção segura de variáveis com ConfigMaps e Secrets.  
-- Automação de build e deploy com GitHub Actions.
+### 📄 `dataBase/01_init.sql`
+- Script de inicialização do banco.  
+- Cria o banco `meubanco` e a tabela `mensagem`.  
+
+Tabela:
+```sql
+CREATE TABLE mensagem (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100),
+  email VARCHAR(100),
+  comentario VARCHAR(255)
+);
+
+
+---
+
+☸️ Kubernetes Manifests
+
+Todos os manifests estão em k8s/.
+
+📄 namespace.yaml
+
+Cria um namespace isolado para o projeto.
+
+
+📄 mysql-secret.yaml
+
+Contém credenciais sensíveis (usuário e senha do banco).
+
+Usado no backend e no MySQL Deployment.
+
+
+📄 mysql-configmap.yaml
+
+Define variáveis de configuração do MySQL, como nome do banco (meubanco).
+
+
+📄 mysql-pvc.yaml
+
+Cria um PersistentVolumeClaim para garantir persistência de dados do banco.
+
+
+📄 mysql-deployment.yaml
+
+Define o Deployment e Service do MySQL.
+
+Configura ambiente, credenciais e volume persistente.
+
+
+📄 backend-deployment.yaml
+
+Cria o Deployment do backend.
+
+imagePullPolicy: Always → sempre puxa a versão mais recente da imagem.
+
+Configura variáveis de ambiente para conexão com MySQL.
+
+Define readinessProbe e livenessProbe.
+
+Cria o Service backend-svc (ClusterIP).
+
+
+📄 frontend-deployment.yaml
+
+Cria o Deployment do frontend.
+
+imagePullPolicy: Always para evitar cache.
+
+Service frontend-svc exposto via NodePort (acessível no Minikube).
+
+
+📄 ingress.yaml
+
+Cria um Ingress que roteia requisições para frontend-svc e backend-svc.
+
+Facilita o acesso usando hostnames configurados no Minikube.
+
+
+
+---
+
+🤖 CI/CD - GitHub Actions
+
+Arquivo: .github/workflows/ci-cd.yml
+
+Fluxo do pipeline:
+
+1. test-build
+
+Faz build local do backend e frontend (docker build) sem push.
+
+Garante que os Dockerfiles estão corretos.
+
+
+
+2. build-backend
+
+Faz login no Docker Hub.
+
+Publica a imagem do backend (latest + hash do commit).
+
+
+
+3. build-frontend
+
+Faz login no Docker Hub.
+
+Publica a imagem do frontend (latest + hash do commit).
+
+
+
+4. validate-k8s
+
+Roda yamllint para validar formatação dos YAMLs.
+
+Roda kubeval para validar schemas Kubernetes.
+
+Roda kubectl apply --dry-run=client para validar aplicação no cluster.
+
+
+
+
+
+---
+
+▶️ Como Executar Localmente (Minikube)
+
+1. Inicie o Minikube
+
+minikube start
+
+
+2. Crie os recursos
+
+kubectl apply -f k8s/
+
+
+3. Verifique os pods
+
+kubectl get pods -n default
+
+
+4. Acesse o frontend
+
+minikube service frontend-svc
+
+
+
+
+---
+
+📦 CI/CD e Deploy
+
+O pipeline roda automaticamente em cada push ou pull request para main.
+
+Publica imagens no Docker Hub (DOCKER_HUB_USER/backend-k8s e frontend-k8s).
+
+Valida os manifests antes do deploy.
+
+
+
+---
+
+✨ Tecnologias Utilizadas
+
+Docker → Containerização.
+
+Kubernetes (Minikube) → Orquestração.
+
+Nginx → Servidor web para frontend.
+
+PHP → Backend simples.
+
+MySQL → Banco de dados relacional.
+
+GitHub Actions → CI/CD automatizado.
+
+
+
+---
+
+👨‍💻 Autor
+
+Projeto desenvolvido por Sérgio Santos
+
+💼 LinkedIn
+
+🐙 GitHub
+
+
+---
+
+👉 Projeto desenvolvido durante o Bootcamp TONNIE - Java and AI in Europe.
 
 
