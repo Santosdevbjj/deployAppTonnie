@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: sergio/frontend-k8s:latest   # imagem publicada no Docker Hub
+        image: sergiosantos/frontend-k8s:latest   # imagem do Docker Hub
+        imagePullPolicy: Always                  # força baixar a imagem nova sempre
         ports:
         - containerPort: 8080
         readinessProbe:
@@ -40,4 +41,4 @@ spec:
   ports:
   - port: 80
     targetPort: 8080
-  type: NodePort   # facilita o acesso no Minikube; em produção pode ser LoadBalancer ou Ingress
+  type: NodePort   # facilita acesso no Minikube com `minikube service frontend-svc --url`
