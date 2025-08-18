@@ -7,9 +7,23 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # Build do Backend
+  # Testa build local (sem push) - garante que Dockerfiles estão corretos
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Test build Backend
+        run: docker build ./backend --file ./backend/Dockerfile --tag backend-test
+
+      - name: Test build Frontend
+        run: docker build ./frontend --file ./frontend/Dockerfile --tag frontend-test
+
+  # Build do Backend e push para Docker Hub
   build-backend:
     runs-on: ubuntu-latest
+    needs: test-build   # só roda se o test-build passar
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -29,9 +43,10 @@ jobs:
             ${{ secrets.DOCKER_HUB_USER }}/backend-k8s:latest
             ${{ secrets.DOCKER_HUB_USER }}/backend-k8s:${{ github.sha }}
 
-  # Build do Frontend
+  # Build do Frontend e push para Docker Hub
   build-frontend:
     runs-on: ubuntu-latest
+    needs: test-build   # só roda se o test-build passar
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
