@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # Testa build local (sem push) - garante que Dockerfiles estão corretos
+  # 1) Testa build local (sem push) - garante que Dockerfiles estão corretos
   test-build:
     runs-on: ubuntu-latest
     steps:
@@ -20,10 +20,10 @@ jobs:
       - name: Test build Frontend
         run: docker build ./frontend --file ./frontend/Dockerfile --tag frontend-test
 
-  # Build do Backend e push para Docker Hub
+  # 2) Build do Backend e push para Docker Hub
   build-backend:
     runs-on: ubuntu-latest
-    needs: test-build   # só roda se o test-build passar
+    needs: test-build
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -43,10 +43,10 @@ jobs:
             ${{ secrets.DOCKER_HUB_USER }}/backend-k8s:latest
             ${{ secrets.DOCKER_HUB_USER }}/backend-k8s:${{ github.sha }}
 
-  # Build do Frontend e push para Docker Hub
+  # 3) Build do Frontend e push para Docker Hub
   build-frontend:
     runs-on: ubuntu-latest
-    needs: test-build   # só roda se o test-build passar
+    needs: test-build
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -65,3 +65,36 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_HUB_USER }}/frontend-k8s:latest
             ${{ secrets.DOCKER_HUB_USER }}/frontend-k8s:${{ github.sha }}
+
+  # 4) Lint e validação dos manifests Kubernetes
+  validate-k8s:
+    runs-on: ubuntu-latest
+    needs: [ build-backend, build-frontend ]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.0'
+
+      # Instala yamllint para checagem de estilo
+      - name: Install yamllint
+        run: sudo apt-get install -y yamllint
+
+      - name: Run yamllint
+        run: yamllint -d "{extends: default, rules: {line-length: disable}}" k8s/
+
+      # Instala kubeval para validar schema do Kubernetes
+      - name: Install kubeval
+        run: |
+          curl -sSL https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz \
+          | tar xz && sudo mv kubeval /usr/local/bin/
+
+      - name: Run kubeval
+        run: kubeval --strict --ignore-missing-schemas k8s/*.yaml
+
+      # Valida aplicação dos manifests com kubectl
+      - name: Validate with kubectl
+        run: kubectl apply --dry-run=client -f k8s/
