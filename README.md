@@ -36,7 +36,7 @@ O Kubernetes gerencia cada camada com **Deployments, Services, ConfigMaps, Secre
 
 ## 📂 Estrutura de Pastas
 
-<img width="1080" height="1667" alt="Screenshot_20250818-013546" src="https://github.com/user-attachments/assets/2c15a116-38a7-40a3-9b40-b5362ad17f4c" />
+<img width="952" height="1651" alt="Screenshot_20250818-014114" src="https://github.com/user-attachments/assets/06be37a5-405f-4863-b467-ddea0f26a388" />
 
 ---
 
